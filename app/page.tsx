@@ -108,7 +108,12 @@ export default function TiendaInteractivaTierna() {
 
   const [modalRegistro, setModalRegistro] = useState(false);
   const [modalLogin, setModalLogin] = useState(false);
+  const [modalRecuperar, setModalRecuperar] = useState(false); // Estado para el modal de recuperación
+  
   const [formAuth, setFormAuth] = useState({ nombre: '', email: '', password: '' });
+  const [correoRecuperacion, setCorreoRecuperacion] = useState('');
+  const [mensajeRecuperar, setMensajeRecuperar] = useState({ texto: '', tipo: '' });
+
   const [mensajeAuth, setMensajeAuth] = useState({ texto: '', tipo: '' });
   const [usuarioActivo, setUsuarioActivo] = useState<{ nombre: string; email: string; esAdmin: boolean } | null>(null);
   
@@ -271,6 +276,27 @@ export default function TiendaInteractivaTierna() {
       }
     } catch (error) {
       setMensajeAuth({ texto: 'Error de conexión', tipo: 'error' });
+    }
+  };
+
+  // Función para enviar solicitud de recuperación
+  const handleRecuperarContrasena = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMensajeRecuperar({ texto: 'Enviando enlace de rescate...', tipo: 'info' });
+    try {
+      const res = await fetch('/api/auth/olvide-contrasena', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: correoRecuperacion })
+      });
+      if (res.ok) {
+        setMensajeRecuperar({ texto: '✨ ¡Revisa tu correo o terminal para recuperar el acceso!', tipo: 'exito' });
+      } else {
+        const err = await res.json();
+        setMensajeRecuperar({ texto: err.error || 'No se pudo procesar la solicitud', tipo: 'error' });
+      }
+    } catch {
+      setMensajeRecuperar({ texto: 'Error de conexión', tipo: 'error' });
     }
   };
 
@@ -506,10 +532,43 @@ export default function TiendaInteractivaTierna() {
             <button onClick={() => setModalLogin(false)} className="absolute top-5 right-5 font-bold">✕</button>
             <h2 className="text-2xl font-black text-slate-800 mb-4">Iniciar Sesión</h2>
             {mensajeAuth.texto && <div className={`p-3 mb-4 rounded-xl text-xs font-bold ${mensajeAuth.tipo === 'error' ? 'bg-red-50 text-red-600' : 'bg-purple-50 text-purple-700'}`}>{mensajeAuth.texto}</div>}
+            
             <form onSubmit={handleLogin} className="space-y-4">
               <input required type="email" name="email" value={formAuth.email} onChange={handleAuthChange} placeholder="Correo" className="w-full p-3.5 border rounded-2xl outline-none text-sm" />
               <input required type="password" name="password" value={formAuth.password} onChange={handleAuthChange} placeholder="Contraseña" className="w-full p-3.5 border rounded-2xl outline-none text-sm" />
+              
+              <div className="text-right">
+                <button type="button" onClick={() => { setModalLogin(false); setModalRecuperar(true); setMensajeRecuperar({texto:'', tipo:''}); }} className="text-xs text-purple-600 font-bold hover:underline">
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+
               <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3.5 rounded-2xl">Entrar</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL RECUPERAR CONTRASEÑA */}
+      {modalRecuperar && (
+        <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative border">
+            <button onClick={() => setModalRecuperar(false)} className="absolute top-5 right-5 font-bold">✕</button>
+            <h2 className="text-2xl font-black text-slate-800 mb-2">Recuperar Contraseña 🔑</h2>
+            <p className="text-slate-500 text-xs mb-4">Ingresa tu correo registrado para generar un enlace de rescate.</p>
+            
+            {mensajeRecuperar.texto && (
+              <div className={`p-3 mb-4 rounded-xl text-xs font-bold ${mensajeRecuperar.tipo === 'error' ? 'bg-red-50 text-red-600' : mensajeRecuperar.tipo === 'info' ? 'bg-purple-50 text-purple-700' : 'bg-emerald-50 text-emerald-700'}`}>
+                {mensajeRecuperar.texto}
+              </div>
+            )}
+
+            <form onSubmit={handleRecuperarContrasena} className="space-y-4">
+              <input required type="email" value={correoRecuperacion} onChange={(e) => setCorreoRecuperacion(e.target.value)} placeholder="Correo electrónico" className="w-full p-3.5 border rounded-2xl outline-none text-sm" />
+              <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3.5 rounded-2xl transition-all">Enviar Enlace</button>
+              <button type="button" onClick={() => { setModalRecuperar(false); setModalLogin(true); }} className="w-full text-xs text-slate-500 font-bold hover:underline mt-2">
+                ← Volver al inicio de sesión
+              </button>
             </form>
           </div>
         </div>
