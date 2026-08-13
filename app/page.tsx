@@ -425,6 +425,50 @@ export default function TiendaInteractivaTierna() {
         </div>
       </div>
 
+      {/* SECCIÓN SOBRE NOSOTROS / CONTEXTO SEO */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="bg-gradient-to-r from-pink-50/80 via-purple-50/50 to-white rounded-3xl border border-pink-100 p-8 sm:p-12 shadow-sm relative overflow-hidden">
+          <div className="absolute -right-10 -bottom-10 text-9xl opacity-5 select-none pointer-events-none">🧸</div>
+          
+          <div className="max-w-3xl relative z-10 space-y-4">
+            <span className="bg-white text-purple-600 font-black text-xs uppercase tracking-widest px-4 py-1.5 rounded-full shadow-xs border border-purple-100 inline-block">
+              ✨ Nuestra Esencia
+            </span>
+            
+            <h2 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight">
+              Magia y ternura en cada detalle
+            </h2>
+            
+            {/* Párrafo clave exigido para Google */}
+            <p className="text-slate-600 font-medium text-sm sm:text-base leading-relaxed">
+              <strong>Somos Opalo Universo de detalles, tu tienda de regalos favorita ubicada en Tocancipá</strong>, especializados en transformar tus momentos especiales en recuerdos inolvidables. Creamos sonrisas con peluches, dulces, sorpresas personalizadas y obsequios únicos diseñados con todo el amor para sorprender a quienes más amas.
+            </p>
+            
+            {/* Tarjetas secundarias de valor */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+              <div className="bg-white/80 backdrop-blur-xs p-4 rounded-2xl border border-pink-100 shadow-xs">
+                <span className="text-xl block mb-1">🎁</span>
+                <h4 className="font-black text-slate-800 text-xs uppercase">Detalles Únicos</h4>
+                <p className="text-slate-500 text-[11px] mt-0.5">Diseñados para cada ocasión especial.</p>
+              </div>
+              
+              <div className="bg-white/80 backdrop-blur-xs p-4 rounded-2xl border border-pink-100 shadow-xs">
+                <span className="text-xl block mb-1">📍</span>
+                <h4 className="font-black text-slate-800 text-xs uppercase">Ubicación Local</h4>
+                <p className="text-slate-500 text-[11px] mt-0.5">Centro Comercial Fátima, Tocancipá.</p>
+              </div>
+              
+              <div className="bg-white/80 backdrop-blur-xs p-4 rounded-2xl border border-pink-100 shadow-xs">
+                <span className="text-xl block mb-1">💖</span>
+                <h4 className="font-black text-slate-800 text-xs uppercase">Hecho con Amor</h4>
+                <p className="text-slate-500 text-[11px] mt-0.5">Calidad y ternura garantizadas.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* CATÁLOGO */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-8 sm:mb-10 border-b border-pink-100 pb-6">
