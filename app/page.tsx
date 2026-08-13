@@ -33,40 +33,53 @@ const formatearCOP = (valor: number | string) => {
   }).format(Number(valor));
 };
 
-// COMPONENTE TARJETA CON CARRUSEL DE IMÁGENES
 function ProductoCard({ producto, agregarAlCarrito, usuarioActivo }: { producto: Producto, agregarAlCarrito: Function, usuarioActivo: any }) {
   const [indiceImg, setIndiceImg] = useState(0);
+  const FALLBACK_IMAGE = "/logo.jpg"; // Asegúrate de tener un archivo llamado logo.jpg en tu carpeta public/
 
-  const imagenes = producto.galeria && producto.galeria.length > 0 
-    ? producto.galeria 
-    : [{ url: producto.imagen_url, etiqueta: 'Principal' }];
+  // 1. Calculamos la lista de imágenes de forma segura
+  const imagenesValidas = (producto.galeria && producto.galeria.length > 0) 
+    ? producto.galeria.filter(item => item.url && item.url.trim().length > 0)
+    : [];
+
+  // 2. Si la lista está vacía, usamos la imagen principal del producto o el fallback
+  const listaFinal = imagenesValidas.length > 0 
+    ? imagenesValidas 
+    : [{ url: producto.imagen_url && producto.imagen_url.trim().length > 0 ? producto.imagen_url : FALLBACK_IMAGE, etiqueta: 'Principal' }];
+
+  // 3. Calculamos la imagen actual de forma segura
+  const imagenActual = listaFinal[indiceImg]?.url || FALLBACK_IMAGE;
+  const etiquetaActual = listaFinal[indiceImg]?.etiqueta || 'Principal';
 
   const nextImg = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIndiceImg((prev) => (prev + 1) % imagenes.length);
+    setIndiceImg((prev) => (prev + 1) % listaFinal.length);
   };
 
   const prevImg = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIndiceImg((prev) => (prev - 1 + imagenes.length) % imagenes.length);
+    setIndiceImg((prev) => (prev - 1 + listaFinal.length) % listaFinal.length);
   };
 
   return (
     <div className="bg-white rounded-3xl border border-pink-100/80 overflow-hidden shadow-sm hover:shadow-xl hover:border-pink-300 transition-all duration-300 flex flex-col group">
       <div className="h-60 overflow-hidden bg-pink-50/50 relative">
-        <img src={imagenes[indiceImg].url} alt={producto.nombre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        {/* Usamos imagenActual que SIEMPRE tiene un valor string */}
+        <img 
+          src={imagenActual} 
+          alt={producto.nombre} 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+        />
         
         <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase text-purple-600 shadow-xs border border-pink-100">
           {producto.categoria}
         </span>
 
-        {/* ETIQUETA DE LA VARIANTE ACTUAL */}
         <span className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[10px] font-bold shadow-md whitespace-nowrap">
-          {imagenes[indiceImg].etiqueta}
+          {etiquetaActual}
         </span>
 
-        {/* FLECHAS DEL CARRUSEL */}
-        {imagenes.length > 1 && (
+        {listaFinal.length > 1 && (
           <>
             <button onClick={prevImg} className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 w-8 h-8 rounded-full flex items-center justify-center text-purple-700 font-black shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-100">‹</button>
             <button onClick={nextImg} className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 w-8 h-8 rounded-full flex items-center justify-center text-purple-700 font-black shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-100">›</button>
@@ -82,7 +95,7 @@ function ProductoCard({ producto, agregarAlCarrito, usuarioActivo }: { producto:
           <span className="text-xs font-bold px-3 py-1 bg-pink-50 text-pink-600 rounded-full">Stock: {producto.stock}</span>
         </div>
         <button 
-          onClick={() => agregarAlCarrito(producto, imagenes[indiceImg])}
+          onClick={() => agregarAlCarrito(producto, listaFinal[indiceImg])}
           disabled={producto.stock <= 0}
           className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-2xl hover:opacity-95 shadow-md shadow-pink-200 transition-all hover:scale-105 disabled:opacity-50"
         >
