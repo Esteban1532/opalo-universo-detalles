@@ -673,46 +673,67 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* FOOTER */}
-      <footer className="bg-white border-t border-pink-100 py-12 px-4 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+{/* FOOTER PREMIUM */}
+      <footer className="bg-gradient-to-b from-white to-pink-50 border-t border-pink-100 py-12 px-6 mt-16 pb-24 sm:pb-12">
+        <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-6">
           
-          {/* INFO TIENDA */}
-          <div className="text-center md:text-left">
-            <h3 className="text-lg font-black text-purple-700">Opalo Universo de detalles</h3>
-            <p className="text-slate-500 font-bold text-sm mt-1 flex items-center justify-center md:justify-start gap-1">
-              📍 Tocancipá, Colombia
-            </p>
+          {/* Nombre y Ubicación interactiva con Google Maps */}
+          <div className="space-y-1">
+            <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
+              Opalo Universo de detalles
+            </h3>
+            <a 
+              href="https://www.google.com/maps/place/Centro+comercial+Fatima/@4.9652605,-73.916047,18z/data=!4m6!3m5!1s0x8e40730a1ee6efd3:0xb27246b41629173f!8m2!3d4.9652552!4d-73.9147542!16s%2Fg%2F11vz0khm3t?entry=ttu&g_ep=EgoyMDI2MDgxMS4wIKXMDSoASAFQAw%3D%3D" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-slate-500 hover:text-purple-600 font-bold text-sm flex items-center justify-center gap-2 transition-colors"
+              title="Ver ubicación en Google Maps"
+            >
+              📍 Tocancipá, Colombia (Centro Comercial Fátima)
+            </a>
           </div>
 
-          {/* REDES SOCIALES */}
-          <div className="flex items-center gap-6">
+          {/* Iconos de Redes Sociales (Instagram, Facebook y TikTok) */}
+          <div className="flex gap-6">
+            
+            {/* Instagram */}
             <a 
               href="https://www.instagram.com/opalo.ud?igsh=MWJvOXFycHVhdXU0aQ==" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-purple-600 hover:text-pink-500 transition-colors transform hover:scale-110"
+              className="w-12 h-12 rounded-full bg-white shadow-md border border-pink-100 flex items-center justify-center text-pink-600 hover:scale-110 transition-transform hover:shadow-pink-200"
               title="Instagram"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.556 0 5.829 0 8c0 2.171.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/>
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.556 0 5.829 0 8c0 2.171.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334"/></svg>
             </a>
+
+            {/* Facebook */}
+            <a 
+              href="https://www.facebook.com/people/%C3%93palo-Universo-de-Detalles/61576582142049/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="w-12 h-12 rounded-full bg-white shadow-md border border-pink-100 flex items-center justify-center text-blue-600 hover:scale-110 transition-transform hover:shadow-pink-200"
+              title="Facebook"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>
+            </a>
+
+            {/* TikTok */}
             <a 
               href="https://www.tiktok.com/@opalo.ud?_r=1&_t=ZS-98rRYhXQSe1" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="text-purple-600 hover:text-pink-500 transition-colors transform hover:scale-110"
+              className="w-12 h-12 rounded-full bg-white shadow-md border border-pink-100 flex items-center justify-center text-slate-800 hover:scale-110 transition-transform hover:shadow-pink-200"
               title="TikTok"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.077-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
-              </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.077-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/></svg>
             </a>
+
           </div>
-        </div>
-        <div className="text-center mt-8 pt-4 border-t border-pink-100 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-          © 2026 Opalo Universo de detalles. Todos los derechos reservados.
+
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4">
+            © 2026 Opalo Universo de detalles. Todos los derechos reservados.
+          </p>
         </div>
       </footer>
 
