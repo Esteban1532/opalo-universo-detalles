@@ -3,8 +3,6 @@ import { Pool } from 'pg';
 import crypto from 'crypto';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const pool = new Pool({
   host: process.env.PG_HOST,
   port: parseInt(process.env.PG_PORT || '6543'),
@@ -15,6 +13,9 @@ const pool = new Pool({
 
 export async function POST(request: Request) {
   try {
+    // 🟢 MOVIDO AQUÍ ADENTRO para evitar el error de compilación en Vercel
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
     const { email } = await request.json();
     const token = crypto.randomBytes(32).toString('hex');
 
@@ -32,11 +33,9 @@ export async function POST(request: Request) {
     );
     client.release();
 
-    // 🟢 ESTO DETECTA AUTOMÁTICAMENTE TU URL DE VERCEL (O LOCALHOST)
     const origin = request.headers.get('origin') || 'https://opalo-universo-detalles.vercel.app';
     const enlaceRecuperacion = `${origin}/reset-password?token=${token}`;
 
-    // 🟢 ENVIAR CORREO CON RESEND
     const { error } = await resend.emails.send({
       from: 'Universo Detalles <onboarding@resend.dev>', 
       to: email,
