@@ -347,21 +347,28 @@ export default function TiendaInteractivaTierna() {
           <div className="flex justify-between h-16 sm:h-20 items-center">
             
             {/* LADO IZQUIERDO */}
-            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0">
+            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0 max-w-[55%] sm:max-w-none">
+              
+              {/* 1. Logo */}
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
                 <img src="/logo.jpg" alt="Logo Ópalo" className="w-full h-full object-cover" />
               </div>
 
-              {/* El osito se oculta en móviles para ahorrar espacio */}
+              {/* 2. El osito (Oculto en móvil para ahorrar espacio) */}
               <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-50 to-purple-100 border border-purple-100 items-center justify-center shadow-sm shadow-purple-200 text-2xl group-hover:rotate-12 transition-transform shrink-0">
                 🧸
               </div>
               
-              <div className="flex flex-col justify-center min-w-0 pr-1">
-                <span className="text-[13px] sm:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 block leading-none mb-0.5 truncate">
+              {/* 3. Nombre de la Tienda (Diseño idéntico pero adaptado sin romper márgenes) */}
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="text-sm sm:text-xl font-black tracking-tight text-purple-600 block leading-tight truncate">
                   UNIVERSO<span className="text-pink-400">DETALLES</span>
                 </span>
+                <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 tracking-wider uppercase truncate">
+                  Ópalo Magia 🌟
+                </span>
               </div>
+
             </div>
             
             {/* LADO DERECHO (Botones compactos en móvil) */}
