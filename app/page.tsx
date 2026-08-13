@@ -33,22 +33,35 @@ const formatearCOP = (valor: number | string) => {
   }).format(Number(valor));
 };
 
+// COMPONENTE TARJETA CON CARRUSEL DE IMÁGENES Y PARSEOBINDADO
 function ProductoCard({ producto, agregarAlCarrito, usuarioActivo }: { producto: Producto, agregarAlCarrito: Function, usuarioActivo: any }) {
   const [indiceImg, setIndiceImg] = useState(0);
-  const FALLBACK_IMAGE = "/logo.jpg"; // Asegúrate de tener un archivo llamado logo.jpg en tu carpeta public/
 
-  // 1. Calculamos la lista de imágenes de forma segura
-  const imagenesValidas = (producto.galeria && producto.galeria.length > 0) 
-    ? producto.galeria.filter(item => item.url && item.url.trim().length > 0)
-    : [];
+  // 1. Parsear la galería de forma segura (maneja tanto arreglos como strings JSON de la base de datos)
+  let galeriaArray: Variante[] = [];
+  try {
+    if (typeof producto.galeria === 'string') {
+      galeriaArray = JSON.parse(producto.galeria);
+    } else if (Array.isArray(producto.galeria)) {
+      galeriaArray = producto.galeria;
+    }
+  } catch (e) {
+    galeriaArray = [];
+  }
 
-  // 2. Si la lista está vacía, usamos la imagen principal del producto o el fallback
+  // 2. Filtrar imágenes válidas que tengan una URL real
+  const imagenesValidas = galeriaArray.filter(
+    item => item && typeof item.url === 'string' && item.url.trim() !== ''
+  );
+
+  // 3. Si hay galería válida, se usa; si no, se busca la imagen_url principal, o un placeholder neutral
   const listaFinal = imagenesValidas.length > 0 
     ? imagenesValidas 
-    : [{ url: producto.imagen_url && producto.imagen_url.trim().length > 0 ? producto.imagen_url : FALLBACK_IMAGE, etiqueta: 'Principal' }];
+    : (producto.imagen_url && producto.imagen_url.trim() !== '' 
+        ? [{ url: producto.imagen_url, etiqueta: 'Principal' }] 
+        : [{ url: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500&auto=format&fit=crop&q=60', etiqueta: 'Disponible' }]);
 
-  // 3. Calculamos la imagen actual de forma segura
-  const imagenActual = listaFinal[indiceImg]?.url || FALLBACK_IMAGE;
+  const imagenActual = listaFinal[indiceImg]?.url || listaFinal[0].url;
   const etiquetaActual = listaFinal[indiceImg]?.etiqueta || 'Principal';
 
   const nextImg = (e: React.MouseEvent) => {
@@ -64,7 +77,6 @@ function ProductoCard({ producto, agregarAlCarrito, usuarioActivo }: { producto:
   return (
     <div className="bg-white rounded-3xl border border-pink-100/80 overflow-hidden shadow-sm hover:shadow-xl hover:border-pink-300 transition-all duration-300 flex flex-col group">
       <div className="h-60 overflow-hidden bg-pink-50/50 relative">
-        {/* Usamos imagenActual que SIEMPRE tiene un valor string */}
         <img 
           src={imagenActual} 
           alt={producto.nombre} 
@@ -75,10 +87,12 @@ function ProductoCard({ producto, agregarAlCarrito, usuarioActivo }: { producto:
           {producto.categoria}
         </span>
 
+        {/* ETIQUETA DE LA VARIANTE ACTUAL */}
         <span className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[10px] font-bold shadow-md whitespace-nowrap">
           {etiquetaActual}
         </span>
 
+        {/* FLECHAS DEL CARRUSEL */}
         {listaFinal.length > 1 && (
           <>
             <button onClick={prevImg} className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 w-8 h-8 rounded-full flex items-center justify-center text-purple-700 font-black shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-100">‹</button>
