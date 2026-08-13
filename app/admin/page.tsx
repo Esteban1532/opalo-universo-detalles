@@ -27,13 +27,6 @@ interface Venta {
   fecha: string;
 }
 
-// Nueva interfaz para los usuarios
-interface UsuarioRegistrado {
-  id: string | number;
-  nombre: string;
-  email: string;
-}
-
 const formatearCOP = (valor: number | string) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -53,13 +46,9 @@ export default function AdminDashboardSeguro() {
   const [codigoSeguridad, setCodigoSeguridad] = useState('');
   const [mensaje2FA, setMensaje2FA] = useState({ texto: '', tipo: '' });
 
-  // Agregamos 'USUARIOS' a las vistas activas
-  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL' | 'USUARIOS'>('DASHBOARD');
-  
+  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL'>('DASHBOARD');
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
-  const [usuariosLista, setUsuariosLista] = useState<UsuarioRegistrado[]>([]); // Estado para usuarios
-
   const [cargandoDatos, setCargandoDatos] = useState(false);
   const [mensajeGlobal, setMensajeGlobal] = useState({ texto: '', tipo: '' });
 
@@ -93,11 +82,9 @@ export default function AdminDashboardSeguro() {
   const fetchData = async () => {
     setCargandoDatos(true);
     try {
-      // Hacemos las 3 peticiones al mismo tiempo
-      const [resProductos, resVentas, resUsuarios] = await Promise.all([
+      const [resProductos, resVentas] = await Promise.all([
         fetch('/api/productos'),
-        fetch('/api/ventas'),
-        fetch('/api/usuarios')
+        fetch('/api/ventas')
       ]);
 
       if (resProductos.ok) {
@@ -108,11 +95,6 @@ export default function AdminDashboardSeguro() {
       if (resVentas.ok) {
         const dataVentas = await resVentas.json();
         setVentas(dataVentas);
-      }
-
-      if (resUsuarios.ok) {
-        const dataUsuarios = await resUsuarios.json();
-        setUsuariosLista(dataUsuarios);
       }
     } catch (error) {
       console.error("Error cargando los datos del dashboard");
@@ -312,7 +294,6 @@ export default function AdminDashboardSeguro() {
             <button onClick={() => { setVistaActiva('NUEVO'); setEditando(false); setFormData({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' }); setGaleria([]); setMensajeGlobal({texto:'', tipo:''}); }} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'NUEVO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🎁 {editando ? 'Editar Producto' : 'Nuevo Producto'}</button>
             <button onClick={() => setVistaActiva('INVENTARIO')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'INVENTARIO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📦 Inventario</button>
             <button onClick={() => setVistaActiva('HISTORIAL')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'HISTORIAL' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🧾 Ventas</button>
-            <button onClick={() => setVistaActiva('USUARIOS')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'USUARIOS' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>👥 Usuarios</button>
           </div>
 
           {mensajeGlobal.texto && (
@@ -324,7 +305,7 @@ export default function AdminDashboardSeguro() {
           {vistaActiva === 'DASHBOARD' && (
             <div className="space-y-6 animate-in slide-in-from-left-4">
               <h2 className="text-2xl font-black text-slate-800">Estadísticas Mágicas 📈</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl mb-3">🛍️</div>
                   <p className="text-xs font-bold text-slate-400 uppercase">Catálogo</p>
@@ -337,18 +318,13 @@ export default function AdminDashboardSeguro() {
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl mb-3">🛒</div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Vendidos</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase">Artículos Vendidos</p>
                   <p className="text-2xl font-black text-blue-600">{totalProductosVendidos} und</p>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl mb-3">💰</div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Ingresos</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase">Ingresos Totales</p>
                   <p className="text-2xl font-black text-amber-600">{formatearCOP(totalVentasDinero)}</p>
-                </div>
-                <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
-                  <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-2xl mb-3">👥</div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Clientes</p>
-                  <p className="text-2xl font-black text-pink-600">{usuariosLista.length} reg.</p>
                 </div>
               </div>
 
@@ -528,54 +504,6 @@ export default function AdminDashboardSeguro() {
                  </div>
                )}
              </div>
-          )}
-
-          {/* NUEVA VISTA DE USUARIOS */}
-          {vistaActiva === 'USUARIOS' && (
-            <div className="bg-white rounded-3xl shadow-sm border border-pink-100 overflow-hidden animate-in slide-in-from-right-4">
-              <div className="p-6 md:p-10 border-b border-pink-50">
-                  <h2 className="text-2xl font-black text-slate-800">Directorio de Clientes 👥</h2>
-                  <p className="text-slate-500 text-sm">Listado de todos los exploradores mágicos registrados en la tienda.</p>
-              </div>
-              
-              {cargandoDatos ? (
-                 <div className="p-12 text-center text-purple-600 font-bold animate-pulse">Cargando usuarios...</div>
-              ) : usuariosLista.length === 0 ? (
-                 <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-                   <div className="text-4xl mb-3">👻</div>
-                   <p>Aún no hay clientes registrados.</p>
-                 </div>
-              ) : (
-                 <div className="overflow-x-auto">
-                   <table className="w-full text-left border-collapse">
-                     <thead>
-                       <tr className="bg-purple-50 text-purple-700 text-xs uppercase tracking-wider">
-                         <th className="p-4 font-black">ID</th>
-                         <th className="p-4 font-black">Nombre del Cliente</th>
-                         <th className="p-4 font-black">Correo Electrónico</th>
-                       </tr>
-                     </thead>
-                     <tbody className="text-sm divide-y divide-pink-50">
-                       {usuariosLista.map((u, index) => (
-                         <tr key={u.id || index} className="hover:bg-pink-50/30 transition-colors">
-                           <td className="p-4 text-xs font-bold text-slate-400 w-16">#{u.id}</td>
-                           <td className="p-4 font-bold text-slate-800 flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-200 to-purple-300 flex items-center justify-center text-purple-700 uppercase shadow-sm">
-                               {u.nombre.charAt(0)}
-                             </div>
-                             {u.nombre}
-                             {u.email === 'opalouniversodedetalles@gmail.com' && (
-                               <span className="bg-purple-100 text-purple-600 text-[9px] px-2 py-0.5 rounded-full font-black ml-2 uppercase">👑 Admin</span>
-                             )}
-                           </td>
-                           <td className="p-4 text-slate-500 font-medium">{u.email}</td>
-                         </tr>
-                       ))}
-                     </tbody>
-                   </table>
-                 </div>
-              )}
-            </div>
           )}
 
         </main>
