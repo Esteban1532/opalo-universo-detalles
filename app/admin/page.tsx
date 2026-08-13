@@ -16,7 +16,7 @@ interface Producto {
   stock: number;
   imagen_url: string;
   categoria: string;
-  galeria?: Variante[];
+  galeria?: Variante[] | string;
 }
 
 interface Venta {
@@ -25,6 +25,12 @@ interface Venta {
   cantidad: number;
   total: string | number;
   fecha: string;
+}
+
+interface UsuarioRegistrado {
+  id: string | number;
+  nombre: string;
+  email: string;
 }
 
 const formatearCOP = (valor: number | string) => {
@@ -46,17 +52,20 @@ export default function AdminDashboardSeguro() {
   const [codigoSeguridad, setCodigoSeguridad] = useState('');
   const [mensaje2FA, setMensaje2FA] = useState({ texto: '', tipo: '' });
 
-  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL'>('DASHBOARD');
+  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL' | 'USUARIOS'>('DASHBOARD');
+  
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
+  const [usuariosLista, setUsuariosLista] = useState<UsuarioRegistrado[]>([]);
+
   const [cargandoDatos, setCargandoDatos] = useState(false);
   const [mensajeGlobal, setMensajeGlobal] = useState({ texto: '', tipo: '' });
 
   const [loading, setLoading] = useState(false);
+  const [cargandoImagen, setCargandoImagen] = useState(false); // Bloqueo anti-envío vacío
   const [formData, setFormData] = useState({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' });
   const [editando, setEditando] = useState(false);
 
-  // Estados para la galería de colores/diseños
   const [galeria, setGaleria] = useState<Variante[]>([]);
   const [nuevaImg, setNuevaImg] = useState({ url: '', etiqueta: '' });
 
@@ -82,9 +91,10 @@ export default function AdminDashboardSeguro() {
   const fetchData = async () => {
     setCargandoDatos(true);
     try {
-      const [resProductos, resVentas] = await Promise.all([
+      const [resProductos, resVentas, resUsuarios] = await Promise.all([
         fetch('/api/productos'),
-        fetch('/api/ventas')
+        fetch('/api/ventas'),
+        fetch('/api/usuarios')
       ]);
 
       if (resProductos.ok) {
@@ -95,6 +105,11 @@ export default function AdminDashboardSeguro() {
       if (resVentas.ok) {
         const dataVentas = await resVentas.json();
         setVentas(dataVentas);
+      }
+
+      if (resUsuarios.ok) {
+        const dataUsuarios = await resUsuarios.json();
+        setUsuariosLista(dataUsuarios);
       }
     } catch (error) {
       console.error("Error cargando los datos del dashboard");
@@ -132,18 +147,24 @@ export default function AdminDashboardSeguro() {
     } catch (error) { setMensaje2FA({ texto: 'Error de conexión', tipo: 'error' }); }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => { setFormData({ ...formData, [e.target.name]: e.target.value }); };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => { 
+    setFormData({ ...formData, [e.target.name]: e.target.value }); 
+  };
 
+  // Capturador seguro para imagen principal y galería
   const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>, esGaleria: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
+      setCargandoImagen(true);
       const reader = new FileReader();
       reader.onloadend = () => { 
+        const base64String = reader.result as string;
         if (esGaleria) {
-          setNuevaImg(prev => ({ ...prev, url: reader.result as string }));
+          setNuevaImg(prev => ({ ...prev, url: base64String }));
         } else {
-          setFormData(prev => ({ ...prev, imagen_url: reader.result as string })); 
+          setFormData(prev => ({ ...prev, imagen_url: base64String })); 
         }
+        setCargandoImagen(false);
       };
       reader.readAsDataURL(file);
     }
@@ -164,20 +185,28 @@ export default function AdminDashboardSeguro() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (cargandoImagen) {
+      alert("Por favor espera a que la imagen termine de procesarse.");
+      return;
+    }
+
     setLoading(true);
     setMensajeGlobal({ texto: 'Guardando magia en Supabase...', tipo: 'info' });
 
     const url = editando ? `/api/productos/${formData.id}` : '/api/productos';
     const method = editando ? 'PUT' : 'POST';
 
-    const imagenPrincipal = galeria.length > 0 ? galeria[0].url : formData.imagen_url;
+    // Asegurar que si hay galería, la imagen principal sea la primera de la galería o el formData
+    const galeriaFiltrada = galeria.filter(item => item.url && item.url.trim() !== "");
+    const imagenPrincipal = formData.imagen_url || (galeriaFiltrada.length > 0 ? galeriaFiltrada[0].url : '/logo.jpg');
 
     const payload = {
       ...formData,
       imagen_url: imagenPrincipal,
       precio: parseFloat(formData.precio),
       stock: parseInt(formData.stock, 10),
-      galeria: galeria.length > 0 ? galeria : [{ url: imagenPrincipal, etiqueta: 'Principal' }]
+      galeria: galeriaFiltrada.length > 0 ? galeriaFiltrada : [{ url: imagenPrincipal, etiqueta: 'Principal' }]
     };
 
     try {
@@ -193,22 +222,38 @@ export default function AdminDashboardSeguro() {
         setEditando(false);
         fetchData(); 
         setTimeout(() => setVistaActiva('INVENTARIO'), 1500); 
-      } else { setMensajeGlobal({ texto: 'Error al procesar la solicitud.', tipo: 'error' }); }
-    } catch (error) { setMensajeGlobal({ texto: 'Error de conexión.', tipo: 'error' }); } 
-    finally { setLoading(false); }
+      } else { 
+        setMensajeGlobal({ texto: 'Error al procesar la solicitud.', tipo: 'error' }); 
+      }
+    } catch (error) { 
+      setMensajeGlobal({ texto: 'Error de conexión.', tipo: 'error' }); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   const iniciarEdicion = (producto: Producto) => {
+    let parsedGaleria: Variante[] = [];
+    try {
+      if (typeof producto.galeria === 'string') {
+        parsedGaleria = JSON.parse(producto.galeria);
+      } else if (Array.isArray(producto.galeria)) {
+        parsedGaleria = producto.galeria;
+      }
+    } catch (e) {
+      parsedGaleria = [];
+    }
+
     setFormData({
       id: producto.id, 
       nombre: producto.nombre, 
       descripcion: producto.descripcion,
       precio: Math.round(Number(producto.precio)).toString(),
       stock: producto.stock.toString(),
-      imagen_url: producto.imagen_url, 
+      imagen_url: producto.imagen_url || '', 
       categoria: producto.categoria
     });
-    setGaleria(producto.galeria && producto.galeria.length > 0 ? producto.galeria : [{ url: producto.imagen_url, etiqueta: 'Principal' }]);
+    setGaleria(parsedGaleria.length > 0 ? parsedGaleria : [{ url: producto.imagen_url || '/logo.jpg', etiqueta: 'Principal' }]);
     setEditando(true);
     setVistaActiva('NUEVO');
   };
@@ -294,6 +339,7 @@ export default function AdminDashboardSeguro() {
             <button onClick={() => { setVistaActiva('NUEVO'); setEditando(false); setFormData({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' }); setGaleria([]); setMensajeGlobal({texto:'', tipo:''}); }} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'NUEVO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🎁 {editando ? 'Editar Producto' : 'Nuevo Producto'}</button>
             <button onClick={() => setVistaActiva('INVENTARIO')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'INVENTARIO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📦 Inventario</button>
             <button onClick={() => setVistaActiva('HISTORIAL')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'HISTORIAL' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🧾 Ventas</button>
+            <button onClick={() => setVistaActiva('USUARIOS')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'USUARIOS' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>👥 Usuarios</button>
           </div>
 
           {mensajeGlobal.texto && (
@@ -305,7 +351,7 @@ export default function AdminDashboardSeguro() {
           {vistaActiva === 'DASHBOARD' && (
             <div className="space-y-6 animate-in slide-in-from-left-4">
               <h2 className="text-2xl font-black text-slate-800">Estadísticas Mágicas 📈</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-2xl mb-3">🛍️</div>
                   <p className="text-xs font-bold text-slate-400 uppercase">Catálogo</p>
@@ -318,13 +364,18 @@ export default function AdminDashboardSeguro() {
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl mb-3">🛒</div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Artículos Vendidos</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase">Vendidos</p>
                   <p className="text-2xl font-black text-blue-600">{totalProductosVendidos} und</p>
                 </div>
                 <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
                   <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl mb-3">💰</div>
-                  <p className="text-xs font-bold text-slate-400 uppercase">Ingresos Totales</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase">Ingresos</p>
                   <p className="text-2xl font-black text-amber-600">{formatearCOP(totalVentasDinero)}</p>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-pink-100 shadow-sm">
+                  <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center text-2xl mb-3">👥</div>
+                  <p className="text-xs font-bold text-slate-400 uppercase">Clientes</p>
+                  <p className="text-2xl font-black text-pink-600">{usuariosLista.length} reg.</p>
                 </div>
               </div>
 
@@ -334,7 +385,7 @@ export default function AdminDashboardSeguro() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     {productosBajoStock.map(p => (
                       <div key={p.id} className="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-3 border border-red-100">
-                        <img src={p.imagen_url} className="w-12 h-12 rounded-xl object-cover" />
+                        <img src={p.imagen_url || '/logo.jpg'} className="w-12 h-12 rounded-xl object-cover" />
                         <div><p className="text-xs font-bold text-slate-800 truncate">{p.nombre}</p><p className="text-[10px] font-black text-red-500 bg-red-100 px-2 py-0.5 rounded-full inline-block">Quedan {p.stock}</p></div>
                       </div>
                     ))}
@@ -359,9 +410,21 @@ export default function AdminDashboardSeguro() {
                   <input required type="number" name="stock" value={formData.stock} onChange={handleChange} className="w-full bg-pink-50/30 border border-pink-100 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300" placeholder="Stock Inicial" />
                 </div>
                 
+                {/* 🟢 IMAGEN PRINCIPAL DEL PRODUCTO */}
+                <div className="bg-pink-50/50 p-5 rounded-3xl border border-pink-100 space-y-3">
+                  <label className="block text-xs font-bold uppercase text-pink-700">🖼️ Imagen Principal del Producto</label>
+                  <input type="file" accept="image/*" onChange={(e) => handleImageCapture(e, false)} className="text-xs font-bold text-slate-500 file:bg-pink-500 file:text-white file:border-0 file:py-2 file:px-3 file:rounded-xl cursor-pointer w-full" />
+                  {formData.imagen_url && (
+                    <div className="flex items-center gap-3 pt-2">
+                      <img src={formData.imagen_url} className="w-16 h-16 object-cover rounded-xl border-2 border-white shadow-sm" />
+                      <span className="text-xs text-slate-500 font-bold">Imagen principal cargada correctamente</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* GESTOR DE GALERÍA DE COLORES / DISEÑOS */}
                 <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100 space-y-4">
-                  <label className="block text-xs font-bold uppercase text-purple-700">🎨 Galería de Colores o Diseños</label>
+                  <label className="block text-xs font-bold uppercase text-purple-700">🎨 Galería Opcional (Colores o Diseños)</label>
                   
                   <div className="bg-white p-4 rounded-2xl border border-purple-100 space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -371,7 +434,7 @@ export default function AdminDashboardSeguro() {
                     {nuevaImg.url && (
                       <div className="flex items-center gap-3">
                         <img src={nuevaImg.url} className="w-12 h-12 object-cover rounded-xl border" />
-                        <span className="text-xs text-slate-500">Vista previa lista</span>
+                        <span className="text-xs text-slate-500">Variante lista para añadir</span>
                       </div>
                     )}
                     <button type="button" onClick={agregarAGaleria} className="w-full bg-purple-600 text-white font-bold py-2.5 rounded-xl text-xs hover:bg-purple-700 transition-colors">
@@ -408,8 +471,8 @@ export default function AdminDashboardSeguro() {
                   <option value="Tecnología">💻 Tecnología</option>
                 </select>
 
-                <button disabled={loading} type="submit" className="w-full mt-6 bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold py-4 rounded-2xl hover:scale-105 transition-all shadow-md disabled:opacity-50">
-                  {loading ? 'Procesando...' : (editando ? '💾 Guardar Cambios' : '✨ Publicar Producto')}
+                <button disabled={loading || cargandoImagen} type="submit" className="w-full mt-6 bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold py-4 rounded-2xl hover:scale-105 transition-all shadow-md disabled:opacity-50">
+                  {cargandoImagen ? '📸 Procesando imagen...' : (loading ? 'Procesando...' : (editando ? '💾 Guardar Cambios' : '✨ Publicar Producto'))}
                 </button>
               </form>
             </div>
@@ -437,7 +500,11 @@ export default function AdminDashboardSeguro() {
                       {productos.map(p => (
                         <tr key={p.id} className="hover:bg-pink-50/30 transition-colors group">
                           <td className="p-4 flex items-center gap-3">
-                            <img src={p.imagen_url} className="w-10 h-10 rounded-xl object-cover border border-pink-100" />
+                            <img 
+                              src={p.imagen_url && p.imagen_url.trim() !== '' ? p.imagen_url : '/logo.jpg'} 
+                              onError={(e) => { (e.target as HTMLImageElement).src = '/logo.jpg'; }}
+                              className="w-10 h-10 rounded-xl object-cover border border-pink-100" 
+                            />
                             <span className="font-bold text-slate-800">{p.nombre}</span>
                           </td>
                           <td className="p-4"><span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-bold">{p.categoria}</span></td>
@@ -504,6 +571,53 @@ export default function AdminDashboardSeguro() {
                  </div>
                )}
              </div>
+          )}
+
+          {vistaActiva === 'USUARIOS' && (
+            <div className="bg-white rounded-3xl shadow-sm border border-pink-100 overflow-hidden animate-in slide-in-from-right-4">
+              <div className="p-6 md:p-10 border-b border-pink-50">
+                  <h2 className="text-2xl font-black text-slate-800">Directorio de Clientes 👥</h2>
+                  <p className="text-slate-500 text-sm">Listado de todos los exploradores mágicos registrados en la tienda.</p>
+              </div>
+              
+              {cargandoDatos ? (
+                 <div className="p-12 text-center text-purple-600 font-bold animate-pulse">Cargando usuarios...</div>
+              ) : usuariosLista.length === 0 ? (
+                 <div className="p-12 text-center text-slate-500 flex flex-col items-center">
+                   <div className="text-4xl mb-3">👻</div>
+                   <p>Aún no hay clientes registrados.</p>
+                 </div>
+              ) : (
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-left border-collapse">
+                     <thead>
+                       <tr className="bg-purple-50 text-purple-700 text-xs uppercase tracking-wider">
+                         <th className="p-4 font-black">ID</th>
+                         <th className="p-4 font-black">Nombre del Cliente</th>
+                         <th className="p-4 font-black">Correo Electrónico</th>
+                       </tr>
+                     </thead>
+                     <tbody className="text-sm divide-y divide-pink-50">
+                       {usuariosLista.map((u, index) => (
+                         <tr key={u.id || index} className="hover:bg-pink-50/30 transition-colors">
+                           <td className="p-4 text-xs font-bold text-slate-400 w-16">#{u.id}</td>
+                           <td className="p-4 font-bold text-slate-800 flex items-center gap-3">
+                             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-200 to-purple-300 flex items-center justify-center text-purple-700 uppercase shadow-sm">
+                               {u.nombre.charAt(0)}
+                             </div>
+                             {u.nombre}
+                             {u.email === 'opalouniversodedetalles@gmail.com' && (
+                               <span className="bg-purple-100 text-purple-600 text-[9px] px-2 py-0.5 rounded-full font-black ml-2 uppercase">👑 Admin</span>
+                             )}
+                           </td>
+                           <td className="p-4 text-slate-500 font-medium">{u.email}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+              )}
+            </div>
           )}
 
         </main>
