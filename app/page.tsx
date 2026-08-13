@@ -346,29 +346,25 @@ export default function TiendaInteractivaTierna() {
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 sm:h-20 items-center">
             
-{/* LADO IZQUIERDO */}
-            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0">
-              
-              {/* 1. Logo (Ligeramente más compacto en móvil para dar espacio) */}
-              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
+            {/* LADO IZQUIERDO */}
+            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
                 <img src="/logo.jpg" alt="Logo Ópalo" className="w-full h-full object-cover" />
               </div>
 
-              {/* 2. El osito (Se mantiene oculto en celular para ahorrar espacio) */}
+              {/* El osito se oculta en móviles para ahorrar espacio */}
               <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-50 to-purple-100 border border-purple-100 items-center justify-center shadow-sm shadow-purple-200 text-2xl group-hover:rotate-12 transition-transform shrink-0">
                 🧸
               </div>
               
-              {/* 3. Nombre de la Tienda (Visible en móvil, blindado contra descuadres) */}
-              <div className="flex flex-col justify-center min-w-0 pr-1">
-                <span className="text-[13px] sm:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 block leading-none mb-0.5 truncate">
-                  ÓPALO
+              <div className="lg:block">
+                <span className="text-xl font-black tracking-tight text-purple-600 block leading-none">
+                  UNIVERSO<span className="text-pink-400">DETALLES</span>
                 </span>
-                <span className="text-[7px] sm:text-[10px] font-black text-slate-400 tracking-widest uppercase leading-none truncate">
-                  Universo de Detalles
+                <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+                  Ópalo Magia 🌟
                 </span>
               </div>
-
             </div>
             
             {/* LADO DERECHO (Botones compactos en móvil) */}
