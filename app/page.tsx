@@ -357,12 +357,9 @@ export default function TiendaInteractivaTierna() {
                 🧸
               </div>
               
-              <div className="lg:block">
-                <span className="text-xl font-black tracking-tight text-purple-600 block leading-none">
+              <div className="flex flex-col justify-center min-w-0 pr-1">
+                <span className="text-[13px] sm:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 block leading-none mb-0.5 truncate">
                   UNIVERSO<span className="text-pink-400">DETALLES</span>
-                </span>
-                <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                  Ópalo Magia 🌟
                 </span>
               </div>
             </div>
