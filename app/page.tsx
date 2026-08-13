@@ -348,23 +348,27 @@ export default function TiendaInteractivaTierna() {
             
             {/* LADO IZQUIERDO */}
             <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink-0">
+              
+              {/* 1. Logo */}
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
                 <img src="/logo.jpg" alt="Logo Ópalo" className="w-full h-full object-cover" />
               </div>
 
-              {/* El osito se oculta en móviles para ahorrar espacio */}
+              {/* 2. El osito (Se mantiene oculto solo en celular para no asfixiar el espacio) */}
               <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-50 to-purple-100 border border-purple-100 items-center justify-center shadow-sm shadow-purple-200 text-2xl group-hover:rotate-12 transition-transform shrink-0">
                 🧸
               </div>
               
-              <div className="hidden lg:block">
-                <span className="text-xl font-black tracking-tight text-purple-600 block leading-none">
-                  UNIVERSO<span className="text-pink-400">DETALLES</span>
+              {/* 3. Nombre de la Tienda (AHORA VISIBLE Y DINÁMICO EN MÓVIL) */}
+              <div className="flex flex-col justify-center">
+                <span className="text-[15px] sm:text-xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500 block leading-none mb-0.5 sm:mb-1">
+                  ÓPALO
                 </span>
-                <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
-                  Ópalo Magia 🌟
+                <span className="text-[8px] sm:text-[10px] font-black text-slate-400 tracking-widest uppercase leading-none">
+                  Universo de Detalles
                 </span>
               </div>
+
             </div>
             
             {/* LADO DERECHO (Botones compactos en móvil) */}
