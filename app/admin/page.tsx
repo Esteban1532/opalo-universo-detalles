@@ -137,31 +137,30 @@ export default function AdminDashboardSeguro() {
     if (adminVerificado) fetchData();
   }, [adminVerificado]);
 
-  // 🟢 FUNCIÓN MEJORADA: Aprueba, registra en ventas, descuenta stock y quita la notificación
+  // 🟢 FUNCIÓN CORREGIDA: Registra en ventas, descuenta stock y remueve la notificación
   const aprobarPedidoWhatsApp = async (pedido: PedidoWhatsApp) => {
-    if (!window.confirm(`¿Estás seguro de aprobar el pedido ${pedido.id}? Esto registrará la venta y descontará el stock.`)) {
+    if (!window.confirm(`¿Estás seguro de aprobar el pedido ${pedido.id}? Esto registrará la venta y descontará el inventario.`)) {
       return;
     }
 
     setMensajeGlobal({ texto: 'Procesando venta y actualizando inventario...', tipo: 'info' });
 
     try {
-      // 1. Registrar cada producto del carrito como venta y actualizar stock
       for (const item of pedido.productos) {
-        // Registrar la venta en la base de datos
+        // 1. Registrar venta en la base de datos
         await fetch('/api/ventas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             producto_nombre: `${item.nombre} [${item.varianteSeleccionada}]`,
-            cantidad: item.cantidad,
-            total: Number(item.precio) * item.cantidad,
+            cantidad: Number(item.cantidad),
+            total: Number(item.precio) * Number(item.cantidad),
             fecha: new Date().toISOString()
           })
         });
 
-        // Descontar stock del producto en inventario
-        const productoActual = productos.find(p => p.id === item.id);
+        // 2. Descontar stock comparando IDs de manera flexible
+        const productoActual = productos.find(p => String(p.id) === String(item.id));
         if (productoActual) {
           const nuevoStock = Math.max(0, Number(productoActual.stock) - Number(item.cantidad));
           
@@ -174,23 +173,27 @@ export default function AdminDashboardSeguro() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              ...productoActual,
+              nombre: productoActual.nombre,
+              descripcion: productoActual.descripcion,
+              precio: Number(productoActual.precio),
               stock: nuevoStock,
+              imagen_url: productoActual.imagen_url,
+              categoria: productoActual.categoria,
               galeria: galeriaFormateada
             })
           });
         }
       }
 
-      // 2. Quitar la notificación de la lista local de WhatsApp
+      // 3. Remover el pedido aprobado de la lista de WhatsApp
       const actualizados = pedidosWhatsApp.filter(p => p.id !== pedido.id);
       setPedidosWhatsApp(actualizados);
       localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify(actualizados));
 
-      setMensajeGlobal({ texto: `✨ ¡Pedido ${pedido.id} aprobado con éxito! Venta y stock actualizados.`, tipo: 'exito' });
+      setMensajeGlobal({ texto: `✨ ¡Pedido ${pedido.id} aprobado con éxito! Venta registrada y stock actualizado.`, tipo: 'exito' });
       
-      // 3. Recargar datos globales del dashboard
-      fetchData();
+      // 4. Refrescar todos los datos del dashboard y las tablas
+      await fetchData();
 
       setTimeout(() => setMensajeGlobal({ texto: '', tipo: '' }), 4000);
     } catch (error) {

@@ -251,19 +251,22 @@ export default function TiendaInteractivaTierna() {
     const pedidosPrevios = JSON.parse(localStorage.getItem('opalo_pedidos_whatsapp') || '[]');
     localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify([nuevoPedidoAdmin, ...pedidosPrevios]));
 
-    // 4. Armar texto para WhatsApp
-    const detalle = carrito.map(i => `• ${i.nombre} [${i.varianteSeleccionada}] (x${i.cantidad}) - ${formatearCOP(Number(i.precio) * i.cantidad)}`).join('%0A');
+    // 4. Armar texto detallado y robusto para WhatsApp
+    const detalleTexto = carrito.map(i => `• ${i.nombre} [${i.varianteSeleccionada}] - Cant: ${i.cantidad} - Subtotal: ${formatearCOP(Number(i.precio) * i.cantidad)}`).join('\n');
     
-    const textoWhatsApp = `¡Hola! 👋 Me gustaría hacer un pedido en *Universo Detalles*:%0A%0A` +
-      `🆔 *Código de Pedido:* ${idPedido}%0A` +
-      `👤 *Cliente:* ${nombreCliente || 'No especificado'}%0A` +
-      `📍 *Dirección/Ciudad:* ${direccionCliente || 'No especificada'}%0A%0A` +
-      `🛍️ *Productos:*%0A${detalle}%0A%0A` +
-      `💰 *Total a Pagar:* *${formatearCOP(totalCarrito)}*%0A%0A` +
-      `Quedo atento para coordinar el pago. ¡Gracias! ✨`;
+    const textoWhatsApp = 
+      `¡Hola! 👋 Me gustaría hacer un pedido en *Universo Detalles*:\n\n` +
+      `🆔 *Código de Pedido:* ${idPedido}\n` +
+      `👤 *Cliente:* ${nombreCliente || 'No especificado'}\n` +
+      `📍 *Dirección/Ciudad:* ${direccionCliente || 'No especificada'}\n\n` +
+      `🛍️ *Detalle de Productos:*\n${detalleTexto}\n\n` +
+      `💰 *Total a Pagar:* *${formatearCOP(totalCarrito)}*\n\n` +
+      `Quedo atento para coordinar el pago y la entrega. ¡Gracias! ✨`;
 
     const numeroWhatsApp = "573193409024"; 
-    window.open(`https://wa.me/${numeroWhatsApp}?text=${textoWhatsApp}`, '_blank');
+    const urlWpp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(textoWhatsApp)}`;
+
+    window.open(urlWpp, '_blank');
     setModalWhatsAppAbierto(false);
   };
 
@@ -361,14 +364,11 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* NAVBAR REDISEÑADA PARA MÓVIL */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-pink-100 sticky top-0 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 sm:h-20 items-center">
             
-            {/* LADO IZQUIERDO */}
             <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0 max-w-[55%] sm:max-w-none">
-              
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
                 <img src="/logo.jpg" alt="Logo Ópalo" className="w-full h-full object-cover" />
               </div>
@@ -385,10 +385,8 @@ export default function TiendaInteractivaTierna() {
                   Ópalo Magia 🌟
                 </span>
               </div>
-
             </div>
             
-            {/* LADO DERECHO */}
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {usuarioActivo && (
                 <button onClick={() => setModalCarritoAbierto(true)} className="relative bg-purple-100/70 hover:bg-purple-200 text-purple-700 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-2 transition-all shrink-0">
@@ -426,7 +424,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       </nav>
 
-      {/* HERO SECTION */}
       <div className="bg-gradient-to-br from-pink-100/80 via-purple-100/40 to-amber-50/60 py-16 sm:py-20 px-4 relative overflow-hidden border-b border-pink-100 text-center">
         <div className="max-w-3xl mx-auto relative z-10">
           <span className="bg-white/90 text-purple-600 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-3 py-1.5 sm:px-4 rounded-full shadow-sm border border-pink-200 mb-4 inline-block">
@@ -441,7 +438,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       </div>
 
-      {/* CATÁLOGO */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
         <div className="flex items-center justify-between flex-wrap gap-4 mb-8 sm:mb-10 border-b border-pink-100 pb-6">
           <div>
@@ -481,7 +477,6 @@ export default function TiendaInteractivaTierna() {
         )}
       </main>
 
-      {/* --- MODAL CARRITO DE COMPRAS --- */}
       {modalCarritoAbierto && usuarioActivo && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex justify-end">
           <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col p-4 sm:p-6 animate-in slide-in-from-right duration-300">
@@ -534,7 +529,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* SECCIÓN SOBRE NOSOTROS / CONTEXTO SEO */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-gradient-to-r from-pink-50/80 via-purple-50/50 to-white rounded-3xl border border-pink-100 p-8 sm:p-12 shadow-sm relative overflow-hidden">
           <div className="absolute -right-10 -bottom-10 text-9xl opacity-5 select-none pointer-events-none">🧸</div>
@@ -576,7 +570,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       </section>
 
-      {/* --- MODAL WHATSAPP --- */}
       {modalWhatsAppAbierto && usuarioActivo && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative border border-emerald-100 animate-in fade-in zoom-in duration-200">
@@ -600,7 +593,7 @@ export default function TiendaInteractivaTierna() {
 
               <div className="bg-emerald-50 p-3 sm:p-4 rounded-2xl border border-emerald-100 text-[10px] sm:text-xs text-emerald-800">
                 <p className="font-bold mb-1">✨ ¿Qué pasará a continuación?</p>
-                Se abrirá tu aplicación de WhatsApp con el resumen de tus productos por un valor de <b>{formatearCOP(totalCarrito)}</b>.
+                Se abrirá tu aplicación de WhatsApp con el resumen detallado de tus productos por un valor de <b>{formatearCOP(totalCarrito)}</b>.
               </div>
 
               <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm sm:text-base font-bold py-3.5 sm:py-4 rounded-2xl shadow-md shadow-emerald-200 transition-all flex items-center justify-center gap-2 hover:scale-105">
@@ -611,7 +604,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* MODALES DE AUTENTICACIÓN */}
       {modalLogin && (
         <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-8 relative border">
@@ -675,7 +667,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* MASCOTA OPALITO Y WHATSAPP FLOTANTES */}
       {!modalCarritoAbierto && !modalWhatsAppAbierto && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-end gap-2 sm:gap-3 pointer-events-auto">
           
@@ -727,7 +718,6 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-      {/* FOOTER PREMIUM */}
       <footer className="bg-gradient-to-b from-white to-pink-50 border-t border-pink-100 py-12 px-6 mt-16 pb-24 sm:pb-12">
         <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-8">
           
