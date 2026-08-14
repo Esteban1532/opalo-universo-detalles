@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Función para limpiar comillas o espacios accidentales de Vercel
+const cleanEnv = (val = '') => val.trim().replace(/^["'](.+)["']$/, '$1');
+
+const supabaseUrl = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseKey = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -26,7 +29,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json({ error: "Faltan las variables de entorno de Supabase en Vercel" }, { status: 500 });
+      return NextResponse.json({ error: "Faltan las variables de entorno de Supabase configuradas en Vercel" }, { status: 500 });
     }
 
     const body = await request.json();
@@ -44,13 +47,13 @@ export async function POST(request: Request) {
       ]);
 
     if (error) {
-      console.error("Error de Supabase al insertar venta:", error);
+      console.error("Error detallado de Supabase al insertar venta:", error);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
-    console.error("Error en API route POST /api/ventas:", err);
+    console.error("Error crítico en API route POST /api/ventas:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
