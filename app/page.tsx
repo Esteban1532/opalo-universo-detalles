@@ -728,7 +728,7 @@ export default function TiendaInteractivaTierna() {
               Opalo Universo de detalles
             </h3>
             <a 
-              href="https://www.google.com/maps/place/Centro+comercial+Fatima/@4.9652605,-73.916047,18z/data=!4m6!3m5!1s0x8e40730a1ee6efd3:0xb27246b41629173f!8m2!3d4.9652552!4d-73.9147542!16s%2Fg%2F11vz0khm3t?entry=ttu&g_ep=EgoyMDI2MDgxMS4wIKXMDSoASAFQAw%3D%3D" 
+              href="https://www.google.com/maps/place/Opalo+Universo+de+detalles/data=!4m2!3m1!1s0x8e40738d38b44839:0x8eaf217c88c1b462?hl=es-419&trk=https%3A%2F%2Fc.gle%2FAKMee0eIh79RZRPwIvU5yEfnmv5QjfW6Nfw9x7XPf4Sm3EzfjAIAwzwC3Fjen4VlYe2qjroqY1abuqtU_KQk_wlGbhS0G2WcbevDhHote1-8JMQDKn8h2Jrj12WScsmi" 
               target="_blank" 
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-md border border-pink-100 hover:border-purple-300 hover:shadow-purple-100 transition-all transform hover:scale-105"
@@ -737,7 +737,7 @@ export default function TiendaInteractivaTierna() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
               </span>
-              <span className="text-slate-600 font-black text-xs uppercase tracking-widest group-hover:text-purple-700">Tocancipá, Colombia (Ver en Mapa ↗)</span>
+              <span className="text-slate-600 font-black text-xs uppercase tracking-widest group-hover:text-purple-700">Tocancipá (Centro comercial Fatima, Local 133), Colombia (Ver en Mapa ↗)</span>
             </a>
           </div>
 
