@@ -10,6 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export async function GET() {
   try {
     const { data, error } = await supabase
+      .schema('public')
       .from('ventas')
       .select('*')
       .order('fecha', { ascending: false });
