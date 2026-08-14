@@ -33,6 +33,16 @@ interface UsuarioRegistrado {
   email: string;
 }
 
+interface PedidoWhatsApp {
+  id: string;
+  fecha: string;
+  cliente: string;
+  direccion: string;
+  productos: any[];
+  total: number;
+  estado: string;
+}
+
 const formatearCOP = (valor: number | string) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -52,17 +62,18 @@ export default function AdminDashboardSeguro() {
   const [codigoSeguridad, setCodigoSeguridad] = useState('');
   const [mensaje2FA, setMensaje2FA] = useState({ texto: '', tipo: '' });
 
-  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL' | 'USUARIOS'>('DASHBOARD');
+  const [vistaActiva, setVistaActiva] = useState<'DASHBOARD' | 'NUEVO' | 'INVENTARIO' | 'HISTORIAL' | 'USUARIOS' | 'WHATSAPP'>('DASHBOARD');
   
   const [productos, setProductos] = useState<Producto[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
   const [usuariosLista, setUsuariosLista] = useState<UsuarioRegistrado[]>([]);
+  const [pedidosWhatsApp, setPedidosWhatsApp] = useState<PedidoWhatsApp[]>([]);
 
   const [cargandoDatos, setCargandoDatos] = useState(false);
   const [mensajeGlobal, setMensajeGlobal] = useState({ texto: '', tipo: '' });
 
   const [loading, setLoading] = useState(false);
-  const [cargandoImagen, setCargandoImagen] = useState(false); // Bloqueo anti-envío vacío
+  const [cargandoImagen, setCargandoImagen] = useState(false); 
   const [formData, setFormData] = useState({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' });
   const [editando, setEditando] = useState(false);
 
@@ -111,6 +122,11 @@ export default function AdminDashboardSeguro() {
         const dataUsuarios = await resUsuarios.json();
         setUsuariosLista(dataUsuarios);
       }
+
+      // Cargar pedidos de WhatsApp locales
+      const wppPedidos = JSON.parse(localStorage.getItem('opalo_pedidos_whatsapp') || '[]');
+      setPedidosWhatsApp(wppPedidos);
+
     } catch (error) {
       console.error("Error cargando los datos del dashboard");
     } finally {
@@ -121,6 +137,14 @@ export default function AdminDashboardSeguro() {
   useEffect(() => {
     if (adminVerificado) fetchData();
   }, [adminVerificado]);
+
+  const cambiarEstadoPedidoWhatsApp = (idPedido: string, nuevoEstado: string) => {
+    const actualizados = pedidosWhatsApp.map(p => p.id === idPedido ? { ...p, estado: nuevoEstado } : p);
+    setPedidosWhatsApp(actualizados);
+    localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify(actualizados));
+    setMensajeGlobal({ texto: `Pedido ${idPedido} actualizado a: ${nuevoEstado}`, tipo: 'exito' });
+    setTimeout(() => setMensajeGlobal({ texto: '', tipo: '' }), 3000);
+  };
 
   const solicitarCodigo = async () => {
     setMensaje2FA({ texto: 'Generando código de seguridad...', tipo: 'info' });
@@ -151,7 +175,6 @@ export default function AdminDashboardSeguro() {
     setFormData({ ...formData, [e.target.name]: e.target.value }); 
   };
 
-  // Capturador seguro para imagen principal y galería
   const handleImageCapture = (e: React.ChangeEvent<HTMLInputElement>, esGaleria: boolean = false) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -197,7 +220,6 @@ export default function AdminDashboardSeguro() {
     const url = editando ? `/api/productos/${formData.id}` : '/api/productos';
     const method = editando ? 'PUT' : 'POST';
 
-    // Asegurar que si hay galería, la imagen principal sea la primera de la galería o el formData
     const galeriaFiltrada = galeria.filter(item => item.url && item.url.trim() !== "");
     const imagenPrincipal = formData.imagen_url || (galeriaFiltrada.length > 0 ? galeriaFiltrada[0].url : '/logo.jpg');
 
@@ -290,7 +312,7 @@ export default function AdminDashboardSeguro() {
               </div>
 
              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-50 to-purple-100 border border-purple-100 flex items-center justify-center shadow-sm shadow-purple-200 text-2xl flex-shrink-0">
-                🧸
+               🧸
              </div>
              
              <div className="hidden sm:block">
@@ -335,11 +357,12 @@ export default function AdminDashboardSeguro() {
         <main className="flex-grow max-w-7xl mx-auto px-4 py-8 w-full animate-in fade-in duration-500">
           
           <div className="flex flex-wrap gap-3 mb-8 border-b border-pink-100 pb-4">
-            <button onClick={() => setVistaActiva('DASHBOARD')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'DASHBOARD' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📊 Resumen</button>
-            <button onClick={() => { setVistaActiva('NUEVO'); setEditando(false); setFormData({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' }); setGaleria([]); setMensajeGlobal({texto:'', tipo:''}); }} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'NUEVO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🎁 {editando ? 'Editar Producto' : 'Nuevo Producto'}</button>
-            <button onClick={() => setVistaActiva('INVENTARIO')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'INVENTARIO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📦 Inventario</button>
-            <button onClick={() => setVistaActiva('HISTORIAL')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'HISTORIAL' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🧾 Ventas</button>
-            <button onClick={() => setVistaActiva('USUARIOS')} className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'USUARIOS' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>👥 Usuarios</button>
+            <button onClick={() => setVistaActiva('DASHBOARD')} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'DASHBOARD' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📊 Resumen</button>
+            <button onClick={() => { setVistaActiva('NUEVO'); setEditando(false); setFormData({ id: '', nombre: '', descripcion: '', precio: '', stock: '', imagen_url: '', categoria: 'Tecnología' }); setGaleria([]); setMensajeGlobal({texto:'', tipo:''}); }} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'NUEVO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🎁 {editando ? 'Editar Producto' : 'Nuevo Producto'}</button>
+            <button onClick={() => setVistaActiva('INVENTARIO')} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'INVENTARIO' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>📦 Inventario</button>
+            <button onClick={() => setVistaActiva('HISTORIAL')} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'HISTORIAL' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>🧾 Ventas</button>
+            <button onClick={() => setVistaActiva('WHATSAPP')} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'WHATSAPP' ? 'bg-emerald-600 text-white shadow-md shadow-emerald-200' : 'bg-white text-slate-600 hover:bg-emerald-50 border border-emerald-100'}`}>💬 Pedidos Wpp</button>
+            <button onClick={() => setVistaActiva('USUARIOS')} className={`px-5 py-3 rounded-2xl font-bold text-sm transition-all ${vistaActiva === 'USUARIOS' ? 'bg-purple-600 text-white shadow-md shadow-purple-200' : 'bg-white text-slate-600 hover:bg-pink-50 border border-pink-100'}`}>👥 Usuarios</button>
           </div>
 
           {mensajeGlobal.texto && (
@@ -410,7 +433,6 @@ export default function AdminDashboardSeguro() {
                   <input required type="number" name="stock" value={formData.stock} onChange={handleChange} className="w-full bg-pink-50/30 border border-pink-100 p-3.5 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300" placeholder="Stock Inicial" />
                 </div>
                 
-                {/* 🟢 IMAGEN PRINCIPAL DEL PRODUCTO */}
                 <div className="bg-pink-50/50 p-5 rounded-3xl border border-pink-100 space-y-3">
                   <label className="block text-xs font-bold uppercase text-pink-700">🖼️ Imagen Principal del Producto</label>
                   <input type="file" accept="image/*" onChange={(e) => handleImageCapture(e, false)} className="text-xs font-bold text-slate-500 file:bg-pink-500 file:text-white file:border-0 file:py-2 file:px-3 file:rounded-xl cursor-pointer w-full" />
@@ -422,7 +444,6 @@ export default function AdminDashboardSeguro() {
                   )}
                 </div>
 
-                {/* GESTOR DE GALERÍA DE COLORES / DISEÑOS */}
                 <div className="bg-purple-50 p-5 rounded-3xl border border-purple-100 space-y-4">
                   <label className="block text-xs font-bold uppercase text-purple-700">🎨 Galería Opcional (Colores o Diseños)</label>
                   
@@ -520,6 +541,72 @@ export default function AdminDashboardSeguro() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {vistaActiva === 'WHATSAPP' && (
+            <div className="bg-white rounded-3xl shadow-sm border border-emerald-100 p-6 md:p-10 animate-in slide-in-from-right-4 space-y-6">
+              <div className="flex justify-between items-end border-b border-emerald-50 pb-4">
+                <div>
+                  <h2 className="text-2xl font-black text-slate-800">💬 Gestión de Pedidos por WhatsApp</h2>
+                  <p className="text-slate-500 text-sm">Controla los carritos enviados por los clientes y actualiza su estado.</p>
+                </div>
+                <div className="bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
+                  <span className="text-emerald-700 font-bold text-sm">{pedidosWhatsApp.length} Pedidos Registrados</span>
+                </div>
+              </div>
+
+              {pedidosWhatsApp.length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  <span className="text-4xl block mb-2">📥</span>
+                  <p className="font-bold text-sm">No hay pedidos de WhatsApp pendientes todavía.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pedidosWhatsApp.map((pedido) => (
+                    <div key={pedido.id} className="border border-emerald-100 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-emerald-50/20 shadow-xs">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-black text-purple-700 text-base">{pedido.id}</span>
+                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
+                            pedido.estado === 'Vendido' ? 'bg-green-100 text-green-700' : 
+                            pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {pedido.estado}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-bold">📅 {pedido.fecha} | 👤 {pedido.cliente} | 📍 {pedido.direccion}</p>
+                        
+                        <div className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-emerald-100 space-y-1 my-2">
+                          {pedido.productos.map((item: any, idx: number) => (
+                            <div key={idx} className="flex justify-between gap-4">
+                              <span>• {item.nombre} <b className="text-purple-600">[{item.varianteSeleccionada}]</b> (x{item.cantidad})</span>
+                              <span className="font-bold">{formatearCOP(item.precio * item.cantidad)}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <p className="text-sm font-black text-slate-800">Total a Pagar: <span className="text-emerald-600">{formatearCOP(pedido.total)}</span></p>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+                        <button 
+                          onClick={() => cambiarEstadoPedidoWhatsApp(pedido.id, 'Vendido')}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                        >
+                          ✅ Aprobar Venta
+                        </button>
+                        <button 
+                          onClick={() => cambiarEstadoPedidoWhatsApp(pedido.id, 'Cancelado')}
+                          className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                        >
+                          ❌ Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

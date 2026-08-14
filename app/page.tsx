@@ -232,9 +232,30 @@ export default function TiendaInteractivaTierna() {
     e.preventDefault();
     if (carrito.length === 0) return;
 
+    // 1. Generar código de pedido único
+    const idPedido = `#OPALO-${Math.floor(1000 + Math.random() * 9000)}`;
+    const fechaActual = new Date().toLocaleString();
+
+    // 2. Crear estructura del pedido para el Panel Admin local
+    const nuevoPedidoAdmin = {
+      id: idPedido,
+      fecha: fechaActual,
+      cliente: nombreCliente || 'No especificado',
+      direccion: direccionCliente || 'No especificada',
+      productos: carrito,
+      total: totalCarrito,
+      estado: 'Pendiente'
+    };
+
+    // 3. Guardar en localStorage para que el Admin lo gestione
+    const pedidosPrevios = JSON.parse(localStorage.getItem('opalo_pedidos_whatsapp') || '[]');
+    localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify([nuevoPedidoAdmin, ...pedidosPrevios]));
+
+    // 4. Armar texto para WhatsApp
     const detalle = carrito.map(i => `• ${i.nombre} [${i.varianteSeleccionada}] (x${i.cantidad}) - ${formatearCOP(Number(i.precio) * i.cantidad)}`).join('%0A');
     
     const textoWhatsApp = `¡Hola! 👋 Me gustaría hacer un pedido en *Universo Detalles*:%0A%0A` +
+      `🆔 *Código de Pedido:* ${idPedido}%0A` +
       `👤 *Cliente:* ${nombreCliente || 'No especificado'}%0A` +
       `📍 *Dirección/Ciudad:* ${direccionCliente || 'No especificada'}%0A%0A` +
       `🛍️ *Productos:*%0A${detalle}%0A%0A` +
@@ -332,7 +353,6 @@ export default function TiendaInteractivaTierna() {
   };
 
   return (
-    // 🟢 AQUÍ ESTÁ EL PRIMER FIX IMPORTANTE: overflow-x-hidden evita que la pantalla se deslice a los lados
     <div className="min-h-screen flex flex-col bg-[#FFF9F6] font-sans text-slate-800 relative selection:bg-pink-200 overflow-x-hidden">
       
       {toastNotificacion && (
@@ -349,17 +369,14 @@ export default function TiendaInteractivaTierna() {
             {/* LADO IZQUIERDO */}
             <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group min-w-0 max-w-[55%] sm:max-w-none">
               
-              {/* 1. Logo */}
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl overflow-hidden shadow-md shadow-purple-200 group-hover:scale-105 transition-transform border border-purple-100 shrink-0">
                 <img src="/logo.jpg" alt="Logo Ópalo" className="w-full h-full object-cover" />
               </div>
 
-              {/* 2. El osito (Oculto en móvil para ahorrar espacio) */}
               <div className="hidden sm:flex w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-50 to-purple-100 border border-purple-100 items-center justify-center shadow-sm shadow-purple-200 text-2xl group-hover:rotate-12 transition-transform shrink-0">
                 🧸
               </div>
               
-              {/* 3. Nombre de la Tienda (Diseño idéntico pero adaptado sin romper márgenes) */}
               <div className="flex flex-col justify-center min-w-0">
                 <span className="text-sm sm:text-xl font-black tracking-tight text-purple-600 block leading-tight truncate">
                   UNIVERSO<span className="text-pink-400">DETALLES</span>
@@ -371,7 +388,7 @@ export default function TiendaInteractivaTierna() {
 
             </div>
             
-            {/* LADO DERECHO (Botones compactos en móvil) */}
+            {/* LADO DERECHO */}
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
               {usuarioActivo && (
                 <button onClick={() => setModalCarritoAbierto(true)} className="relative bg-purple-100/70 hover:bg-purple-200 text-purple-700 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-1 sm:gap-2 transition-all shrink-0">
@@ -393,7 +410,6 @@ export default function TiendaInteractivaTierna() {
 
               {usuarioActivo ? (
                 <div className="flex items-center gap-2 sm:gap-3 bg-pink-50/80 px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-xl sm:rounded-2xl border border-pink-100 shrink-0">
-                  {/* Truncamos el nombre en móviles si es muy largo */}
                   <span className="text-xs sm:text-sm font-medium text-slate-700 truncate max-w-[70px] sm:max-w-[150px]">
                     <span className="hidden sm:inline">Hola, </span><span className="font-bold text-purple-700">{usuarioActivo.nombre.split(' ')[0]}</span>
                   </span>
@@ -424,7 +440,6 @@ export default function TiendaInteractivaTierna() {
           </p>
         </div>
       </div>
-
 
       {/* CATÁLOGO */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full">
@@ -533,12 +548,10 @@ export default function TiendaInteractivaTierna() {
               Magia y ternura en cada detalle
             </h2>
             
-            {/* Párrafo clave exigido para Google */}
             <p className="text-slate-600 font-medium text-sm sm:text-base leading-relaxed">
               <strong>Somos Opalo Universo de detalles, tu tienda de regalos favorita ubicada en Tocancipá</strong>, especializados en transformar tus momentos especiales en recuerdos inolvidables. Creamos sonrisas con peluches, dulces, sorpresas personalizadas y obsequios únicos diseñados con todo el amor para sorprender a quienes más amas.
             </p>
             
-            {/* Tarjetas secundarias de valor */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
               <div className="bg-white/80 backdrop-blur-xs p-4 rounded-2xl border border-pink-100 shadow-xs">
                 <span className="text-xl block mb-1">🎁</span>
@@ -662,11 +675,10 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-{/* MASCOTA OPALITO Y WHATSAPP FLOTANTES */}
+      {/* MASCOTA OPALITO Y WHATSAPP FLOTANTES */}
       {!modalCarritoAbierto && !modalWhatsAppAbierto && (
         <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-end gap-2 sm:gap-3 pointer-events-auto">
           
-          {/* BURBUJA DE MENSAJE (Alineada a la izquierda de los iconos) */}
           {mostrarOpalitoBubble && (
             <div className="bg-white/95 backdrop-blur-md border border-pink-200 shadow-xl px-3 py-2 sm:px-4 sm:py-3 rounded-2xl max-w-[180px] sm:max-w-xs text-[10px] sm:text-xs font-bold text-slate-700 relative animate-in fade-in slide-in-from-bottom-2 mb-1 sm:mb-0">
               <button onClick={() => setMostrarOpalitoBubble(false)} className="absolute -top-2 -left-2 w-5 h-5 bg-pink-200 rounded-full flex items-center justify-center text-[10px] hover:bg-pink-300">✕</button>
@@ -674,10 +686,8 @@ export default function TiendaInteractivaTierna() {
             </div>
           )}
 
-          {/* COLUMNA VERTICAL PARA ICONOS (WhatsApp arriba, Osito abajo) */}
           <div className="flex flex-col items-center gap-3 sm:gap-4">
             
-            {/* BOTÓN WHATSAPP ANIMADO */}
             <a 
               href="https://wa.me/573193409024?text=¡Hola!%20Vengo%20de%20la%20tienda%20online%20y%20me%20gustaría%20hablar%20con%20un%20asistente.%20✨" 
               target="_blank" 
@@ -690,7 +700,6 @@ export default function TiendaInteractivaTierna() {
               </svg>
             </a>
 
-            {/* OSITO ORIGINAL */}
             <div 
               onClick={() => {
                 setMostrarOpalitoBubble(true);
@@ -718,11 +727,10 @@ export default function TiendaInteractivaTierna() {
         </div>
       )}
 
-{/* FOOTER PREMIUM */}
+      {/* FOOTER PREMIUM */}
       <footer className="bg-gradient-to-b from-white to-pink-50 border-t border-pink-100 py-12 px-6 mt-16 pb-24 sm:pb-12">
         <div className="max-w-5xl mx-auto flex flex-col items-center text-center space-y-8">
           
-          {/* Ubicación Convertida en Botón Visual */}
           <div className="space-y-2">
             <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
               Opalo Universo de detalles
@@ -741,7 +749,6 @@ export default function TiendaInteractivaTierna() {
             </a>
           </div>
 
-          {/* Social Card (Agrupados claramente para indicar interactividad) */}
           <div className="bg-white/50 p-6 rounded-3xl border border-pink-100 shadow-sm flex gap-6">
             {[
               { name: "Instagram", url: "https://www.instagram.com/opalo.ud", color: "text-pink-600", icon: "M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.9 3.9 0 0 0-1.417.923A3.9 3.9 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.556 0 5.829 0 8c0 2.171.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.9 3.9 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.9 3.9 0 0 0-.923-1.417A3.9 3.9 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599s.453.546.598.92c.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.5 2.5 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.233-.047c-.78-.036-1.203-.166-1.485-.276a2.5 2.5 0 0 1-.92-.598 2.5 2.5 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233s.008-2.388.046-3.231c.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92s.546-.453.92-.598c.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92m-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217m0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334" },
@@ -751,7 +758,6 @@ export default function TiendaInteractivaTierna() {
               <a key={social.name} href={social.url} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center">
                 <div className={`w-12 h-12 rounded-2xl bg-white shadow-sm border border-pink-100 flex items-center justify-center ${social.color} transition-all duration-300 group-hover:scale-110 group-hover:shadow-purple-100 relative`}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d={social.icon}/></svg>
-                  {/* Flecha de salida creativa */}
                   <span className="absolute -top-1 -right-1 bg-slate-800 text-white text-[8px] rounded-full w-4 h-4 flex items-center justify-center font-bold">↗</span>
                 </div>
                 <span className="mt-2 text-[9px] font-black uppercase text-slate-400 group-hover:text-purple-600 tracking-wider transition-colors">{social.name}</span>
