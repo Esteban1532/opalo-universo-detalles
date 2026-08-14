@@ -228,7 +228,7 @@ export default function TiendaInteractivaTierna() {
     ? (categoriaActiva === 'Todos' ? productos : productos.filter(p => p.categoria.toLowerCase() === categoriaActiva.toLowerCase()))
     : [];
 
-const enviarPedidoWhatsApp = async (e: React.FormEvent) => {
+  const enviarPedidoWhatsApp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (carrito.length === 0 || !usuarioActivo) return;
 
@@ -323,12 +323,13 @@ const enviarPedidoWhatsApp = async (e: React.FormEvent) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formAuth.email, password: formAuth.password })
       });
-      // En handleLogin, modifica esta parte:
+      
       if (res.ok) {
         const data = await res.json();
-        const esAdministrador = data.email === 'opalouniversodedetalles@gmail.com';
         
-        // AÑADE 'id: data.id' AQUÍ:
+        // Verificamos si es admin por la base de datos (o por el correo como respaldo)
+        const esAdministrador = data.esAdmin !== undefined ? data.esAdmin : (data.email === 'opalouniversodedetalles@gmail.com');
+        
         const datosUsuario = { 
           id: data.id, 
           nombre: data.nombre, 
@@ -339,8 +340,15 @@ const enviarPedidoWhatsApp = async (e: React.FormEvent) => {
         setUsuarioActivo(datosUsuario);
         setNombreCliente(data.nombre);
         localStorage.setItem('usuarioActivo', JSON.stringify(datosUsuario));
-        // ... resto de tu código
-      }else {
+        
+        // Cerrar modal y limpiar
+        setModalLogin(false);
+        setFormAuth({ nombre: '', email: '', password: '' });
+        setMensajeAuth({ texto: '', tipo: '' });
+        
+        setMensajeOpalito(`¡Bienvenido de nuevo, ${data.nombre.split(' ')[0]}! Tu carrito está listo ✨`);
+        
+      } else {
         const err = await res.json();
         setMensajeAuth({ texto: err.error || 'Credenciales incorrectas', tipo: 'error' });
       }
