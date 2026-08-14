@@ -137,7 +137,7 @@ export default function AdminDashboardSeguro() {
     if (adminVerificado) fetchData();
   }, [adminVerificado]);
 
-  // 🟢 FUNCIÓN CORREGIDA: Registra en ventas, descuenta stock y remueve la notificación
+// 🟢 FUNCIÓN DE APROBACIÓN CON DEPURACIÓN Y CONTROL DE ERRORES
   const aprobarPedidoWhatsApp = async (pedido: PedidoWhatsApp) => {
     if (!window.confirm(`¿Estás seguro de aprobar el pedido ${pedido.id}? Esto registrará la venta y descontará el inventario.`)) {
       return;
@@ -148,7 +148,7 @@ export default function AdminDashboardSeguro() {
     try {
       for (const item of pedido.productos) {
         // 1. Registrar venta en la base de datos
-        await fetch('/api/ventas', {
+        const resVenta = await fetch('/api/ventas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -159,7 +159,13 @@ export default function AdminDashboardSeguro() {
           })
         });
 
-        // 2. Descontar stock comparando IDs de manera flexible
+        if (!resVenta.ok) {
+          const errorText = await resVenta.text();
+          console.error("Error al registrar venta en API:", errorText);
+          throw new Error(`Error en API de ventas: ${errorText}`);
+        }
+
+        // 2. Descontar stock buscando por ID
         const productoActual = productos.find(p => String(p.id) === String(item.id));
         if (productoActual) {
           const nuevoStock = Math.max(0, Number(productoActual.stock) - Number(item.cantidad));
@@ -169,7 +175,7 @@ export default function AdminDashboardSeguro() {
             try { galeriaFormateada = JSON.parse(galeriaFormateada); } catch(e) { galeriaFormateada = []; }
           }
 
-          await fetch(`/api/productos/${item.id}`, {
+          const resStock = await fetch(`/api/productos/${item.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -182,6 +188,14 @@ export default function AdminDashboardSeguro() {
               galeria: galeriaFormateada
             })
           });
+
+          if (!resStock.ok) {
+            const errorStockText = await resStock.text();
+            console.error("Error al actualizar stock en API:", errorStockText);
+            throw new Error(`Error en API de productos: ${errorStockText}`);
+          }
+        } else {
+          console.warn(`No se encontró el producto con ID ${item.id} en el estado local para descontar stock.`);
         }
       }
 
@@ -192,13 +206,13 @@ export default function AdminDashboardSeguro() {
 
       setMensajeGlobal({ texto: `✨ ¡Pedido ${pedido.id} aprobado con éxito! Venta registrada y stock actualizado.`, tipo: 'exito' });
       
-      // 4. Refrescar todos los datos del dashboard y las tablas
+      // 4. Refrescar todos los datos del dashboard
       await fetchData();
 
       setTimeout(() => setMensajeGlobal({ texto: '', tipo: '' }), 4000);
     } catch (error) {
-      console.error("Error al aprobar pedido:", error);
-      setMensajeGlobal({ texto: 'Hubo un error al procesar la venta.', tipo: 'error' });
+      console.error("Error detallado al aprobar pedido:", error);
+      setMensajeGlobal({ texto: 'Hubo un error al procesar la venta. Revisa la consola (F12).', tipo: 'error' });
     }
   };
 
