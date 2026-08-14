@@ -734,7 +734,7 @@ export default function TiendaInteractivaTierna() {
               className="text-slate-500 hover:text-purple-600 font-bold text-sm flex items-center justify-center gap-2 transition-colors"
               title="Ver ubicación en Google Maps"
             >
-              📍 Tocancipá, Colombia (Centro Comercial Fátima)
+              📍 Tocancipá, Colombia (Centro Comercial Fátima, Local 133)
             </a>
           </div>
 
