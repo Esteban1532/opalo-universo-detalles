@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 // Si prefieres usar las de Vercel o quemarlas directamente para evitar el fallo de entorno:
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wytwknnkxsdkryezcfiu.supabase.co/rest/v1/"; // <- Tu URL real de Supabase
+const supabaseUrl = "https://wytwknnkxsdkryezcfiu.supabase.co/rest/v1/"; // <- Tu URL real de Supabase
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHdrbm5reHNka3J5ZXpjZml1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDI4NzU0MSwiZXhwIjoyMDk5ODYzNTQxfQ.Wl_iEq8huBc6KY7EzDNvjBP9lC_oOrj9zdbXLFmD9AE"; // <- Tu Service Role Key real
 
 const supabase = createClient(supabaseUrl, supabaseKey);
