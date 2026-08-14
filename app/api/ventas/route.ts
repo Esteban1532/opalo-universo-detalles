@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Si prefieres usar las de Vercel o quemarlas directamente para evitar el fallo de entorno:
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wytwknnkxsdkryezcfiu.supabase.co/rest/v1/"; // <- Tu URL real de Supabase
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5dHdrbm5reHNka3J5ZXpjZml1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDI4NzU0MSwiZXhwIjoyMDk5ODYzNTQxfQ.Wl_iEq8huBc6KY7EzDNvjBP9lC_oOrj9zdbXLFmD9AE"; // <- Tu Service Role Key real
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export async function GET() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
     const { data, error } = await supabase
       .from('ventas')
@@ -24,21 +25,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  // Capturamos directamente dentro de la función para asegurar que Vercel lea el entorno en tiempo de ejecución
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-
-  console.log("DEBUG URL:", supabaseUrl ? "URL Presente (Longitud: " + supabaseUrl.length + ")" : "URL VACÍA");
-  console.log("DEBUG KEY:", supabaseKey ? "KEY Presente" : "KEY VACÍA");
-
-  if (!supabaseUrl || !supabaseUrl.startsWith('http')) {
-    return NextResponse.json({ 
-      error: `URL de Supabase inválida o vacía en Vercel: "${supabaseUrl}". Revisa tus Environment Variables.` 
-    }, { status: 500 });
-  }
-
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
   try {
     const body = await request.json();
     const { producto_nombre, cantidad, total, fecha } = body;
