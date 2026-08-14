@@ -137,7 +137,7 @@ export default function TiendaInteractivaTierna() {
   const [mensajeRecuperar, setMensajeRecuperar] = useState({ texto: '', tipo: '' });
 
   const [mensajeAuth, setMensajeAuth] = useState({ texto: '', tipo: '' });
-  const [usuarioActivo, setUsuarioActivo] = useState<{ nombre: string; email: string; esAdmin: boolean } | null>(null);
+  const [usuarioActivo, setUsuarioActivo] = useState<{ id: string | number; nombre: string; email: string; esAdmin: boolean } | null>(null);
   
   const [mensajeOpalito, setMensajeOpalito] = useState("¡Hola! Inicia sesión para desbloquear tu carrito mágico 🌟");
   const [mostrarOpalitoBubble, setMostrarOpalitoBubble] = useState(true);
@@ -228,9 +228,9 @@ export default function TiendaInteractivaTierna() {
     ? (categoriaActiva === 'Todos' ? productos : productos.filter(p => p.categoria.toLowerCase() === categoriaActiva.toLowerCase()))
     : [];
 
-  const enviarPedidoWhatsApp = (e: React.FormEvent) => {
+const enviarPedidoWhatsApp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (carrito.length === 0) return;
+    if (carrito.length === 0 || !usuarioActivo) return;
 
     // 1. Generar código de pedido único
     const idPedido = `#OPALO-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -251,7 +251,7 @@ export default function TiendaInteractivaTierna() {
     const pedidosPrevios = JSON.parse(localStorage.getItem('opalo_pedidos_whatsapp') || '[]');
     localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify([nuevoPedidoAdmin, ...pedidosPrevios]));
 
-    // 4. Armar texto detallado y robusto para WhatsApp
+    // 4. Armar texto detallado para WhatsApp
     const detalleTexto = carrito.map(i => `• ${i.nombre} [${i.varianteSeleccionada}] - Cant: ${i.cantidad} - Subtotal: ${formatearCOP(Number(i.precio) * i.cantidad)}`).join('\n');
     
     const textoWhatsApp = 
@@ -266,7 +266,26 @@ export default function TiendaInteractivaTierna() {
     const numeroWhatsApp = "573193409024"; 
     const urlWpp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(textoWhatsApp)}`;
 
+    // Abrir WhatsApp
     window.open(urlWpp, '_blank');
+
+    // 5. NUEVO: Llamar a la API para limpiar el carrito en BD
+    try {
+      await fetch('/api/carrito/limpiar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usuario_id: usuarioActivo.id })
+      });
+      
+      // Limpiar estado local
+      setCarrito([]); 
+      localStorage.removeItem('carritoCompras');
+      mostrarToast("✨ ¡Pedido enviado y carrito vaciado!");
+    } catch (err) {
+      console.error("No se pudo limpiar el carrito en BD:", err);
+      mostrarToast("⚠️ Pedido enviado, pero hubo un error al vaciar el carrito.");
+    }
+
     setModalWhatsAppAbierto(false);
   };
 
@@ -304,19 +323,24 @@ export default function TiendaInteractivaTierna() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formAuth.email, password: formAuth.password })
       });
+      // En handleLogin, modifica esta parte:
       if (res.ok) {
         const data = await res.json();
         const esAdministrador = data.email === 'opalouniversodedetalles@gmail.com';
-        const datosUsuario = { nombre: data.nombre, email: data.email, esAdmin: esAdministrador };
+        
+        // AÑADE 'id: data.id' AQUÍ:
+        const datosUsuario = { 
+          id: data.id, 
+          nombre: data.nombre, 
+          email: data.email, 
+          esAdmin: esAdministrador 
+        };
         
         setUsuarioActivo(datosUsuario);
         setNombreCliente(data.nombre);
         localStorage.setItem('usuarioActivo', JSON.stringify(datosUsuario));
-        setModalLogin(false);
-        setFormAuth({ nombre: '', email: '', password: '' });
-        setMensajeAuth({ texto: '', tipo: '' });
-        setMensajeOpalito(`¡Bienvenido de nuevo, ${data.nombre.split(' ')[0]}! Tu carrito está listo ✨`);
-      } else {
+        // ... resto de tu código
+      }else {
         const err = await res.json();
         setMensajeAuth({ texto: err.error || 'Credenciales incorrectas', tipo: 'error' });
       }
