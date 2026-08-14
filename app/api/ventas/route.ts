@@ -1,24 +1,53 @@
 import { NextResponse } from 'next/server';
-import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 
-const pool = new Pool({
-  host: process.env.PG_HOST,
-  port: parseInt(process.env.PG_PORT || '6543'),
-  user: process.env.PG_USER,
-  password: process.env.PG_PASSWORD,
-  database: process.env.PG_DATABASE,
-});
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Manejar peticiones GET (Listar ventas)
 export async function GET() {
   try {
-    const client = await pool.connect();
-    // Traer las ventas ordenadas por fecha (las más nuevas primero)
-    const result = await client.query('SELECT * FROM ventas ORDER BY fecha DESC');
-    client.release();
+    const { data, error } = await supabase
+      .from('ventas')
+      .select('*')
+      .order('fecha', { ascending: false });
 
-    return NextResponse.json(result.rows, { status: 200 });
-  } catch (error) {
-    console.error('Error al cargar historial de ventas:', error);
-    return NextResponse.json({ error: 'Error al cargar las ventas' }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+// Manejar peticiones POST (Registrar nueva venta)
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { producto_nombre, cantidad, total, fecha } = body;
+
+    const { data, error } = await supabase
+      .from('ventas')
+      .insert([
+        { 
+          producto_nombre, 
+          cantidad: Number(cantidad), 
+          total: Number(total), 
+          fecha: fecha || new Date().toISOString() 
+        }
+      ]);
+
+    if (error) {
+      console.error("Error de Supabase al insertar venta:", error);
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (err: any) {
+    console.error("Error en API route POST /api/ventas:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
