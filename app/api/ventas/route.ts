@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Manejar peticiones GET (Listar ventas)
 export async function GET() {
   try {
     const { data, error } = await supabase
@@ -23,9 +23,12 @@ export async function GET() {
   }
 }
 
-// Manejar peticiones POST (Registrar nueva venta)
 export async function POST(request: Request) {
   try {
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: "Faltan las variables de entorno de Supabase en Vercel" }, { status: 500 });
+    }
+
     const body = await request.json();
     const { producto_nombre, cantidad, total, fecha } = body;
 
