@@ -123,7 +123,6 @@ export default function AdminDashboardSeguro() {
         setUsuariosLista(dataUsuarios);
       }
 
-      // Cargar pedidos de WhatsApp locales
       const wppPedidos = JSON.parse(localStorage.getItem('opalo_pedidos_whatsapp') || '[]');
       setPedidosWhatsApp(wppPedidos);
 
@@ -138,11 +137,73 @@ export default function AdminDashboardSeguro() {
     if (adminVerificado) fetchData();
   }, [adminVerificado]);
 
-  const cambiarEstadoPedidoWhatsApp = (idPedido: string, nuevoEstado: string) => {
-    const actualizados = pedidosWhatsApp.map(p => p.id === idPedido ? { ...p, estado: nuevoEstado } : p);
+  // 🟢 FUNCIÓN MEJORADA: Aprueba, registra en ventas, descuenta stock y quita la notificación
+  const aprobarPedidoWhatsApp = async (pedido: PedidoWhatsApp) => {
+    if (!window.confirm(`¿Estás seguro de aprobar el pedido ${pedido.id}? Esto registrará la venta y descontará el stock.`)) {
+      return;
+    }
+
+    setMensajeGlobal({ texto: 'Procesando venta y actualizando inventario...', tipo: 'info' });
+
+    try {
+      // 1. Registrar cada producto del carrito como venta y actualizar stock
+      for (const item of pedido.productos) {
+        // Registrar la venta en la base de datos
+        await fetch('/api/ventas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            producto_nombre: `${item.nombre} [${item.varianteSeleccionada}]`,
+            cantidad: item.cantidad,
+            total: Number(item.precio) * item.cantidad,
+            fecha: new Date().toISOString()
+          })
+        });
+
+        // Descontar stock del producto en inventario
+        const productoActual = productos.find(p => p.id === item.id);
+        if (productoActual) {
+          const nuevoStock = Math.max(0, Number(productoActual.stock) - Number(item.cantidad));
+          
+          let galeriaFormateada = productoActual.galeria;
+          if (typeof galeriaFormateada === 'string') {
+            try { galeriaFormateada = JSON.parse(galeriaFormateada); } catch(e) { galeriaFormateada = []; }
+          }
+
+          await fetch(`/api/productos/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              ...productoActual,
+              stock: nuevoStock,
+              galeria: galeriaFormateada
+            })
+          });
+        }
+      }
+
+      // 2. Quitar la notificación de la lista local de WhatsApp
+      const actualizados = pedidosWhatsApp.filter(p => p.id !== pedido.id);
+      setPedidosWhatsApp(actualizados);
+      localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify(actualizados));
+
+      setMensajeGlobal({ texto: `✨ ¡Pedido ${pedido.id} aprobado con éxito! Venta y stock actualizados.`, tipo: 'exito' });
+      
+      // 3. Recargar datos globales del dashboard
+      fetchData();
+
+      setTimeout(() => setMensajeGlobal({ texto: '', tipo: '' }), 4000);
+    } catch (error) {
+      console.error("Error al aprobar pedido:", error);
+      setMensajeGlobal({ texto: 'Hubo un error al procesar la venta.', tipo: 'error' });
+    }
+  };
+
+  const cancelarPedidoWhatsApp = (idPedido: string) => {
+    const actualizados = pedidosWhatsApp.filter(p => p.id !== idPedido);
     setPedidosWhatsApp(actualizados);
     localStorage.setItem('opalo_pedidos_whatsapp', JSON.stringify(actualizados));
-    setMensajeGlobal({ texto: `Pedido ${idPedido} actualizado a: ${nuevoEstado}`, tipo: 'exito' });
+    setMensajeGlobal({ texto: `Pedido ${idPedido} descartado.`, tipo: 'info' });
     setTimeout(() => setMensajeGlobal({ texto: '', tipo: '' }), 3000);
   };
 
@@ -293,10 +354,10 @@ export default function AdminDashboardSeguro() {
     } catch (error) { setMensajeGlobal({ texto: 'Error de conexión.', tipo: 'error' }); }
   };
 
-  const totalStock = productos.reduce((acc, curr) => acc + curr.stock, 0);
+  const totalStock = productos.reduce((acc, curr) => acc + Number(curr.stock), 0);
   const totalVentasDinero = ventas.reduce((acc, curr) => acc + Number(curr.total), 0);
-  const totalProductosVendidos = ventas.reduce((acc, curr) => acc + curr.cantidad, 0);
-  const productosBajoStock = productos.filter(p => p.stock < 5);
+  const totalProductosVendidos = ventas.reduce((acc, curr) => acc + Number(curr.cantidad), 0);
+  const productosBajoStock = productos.filter(p => Number(p.stock) < 5);
 
   if (verificando) return <div className="min-h-screen bg-[#FFF9F6] flex justify-center items-center font-bold text-purple-600">Verificando credenciales...</div>;
 
@@ -531,7 +592,7 @@ export default function AdminDashboardSeguro() {
                           <td className="p-4"><span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-lg text-xs font-bold">{p.categoria}</span></td>
                           <td className="p-4 font-bold text-slate-700">{formatearCOP(p.precio)}</td>
                           <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${p.stock < 5 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>{p.stock} und</span>
+                            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${Number(p.stock) < 5 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-700'}`}>{p.stock} und</span>
                           </td>
                           <td className="p-4 text-right space-x-2">
                             <button onClick={() => iniciarEdicion(p)} className="p-2 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition-colors" title="Editar">✏️</button>
@@ -551,17 +612,17 @@ export default function AdminDashboardSeguro() {
               <div className="flex justify-between items-end border-b border-emerald-50 pb-4">
                 <div>
                   <h2 className="text-2xl font-black text-slate-800">💬 Gestión de Pedidos por WhatsApp</h2>
-                  <p className="text-slate-500 text-sm">Controla los carritos enviados por los clientes y actualiza su estado.</p>
+                  <p className="text-slate-500 text-sm">Aprueba los pedidos para registrar la venta y descontar el inventario automáticamente.</p>
                 </div>
                 <div className="bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                  <span className="text-emerald-700 font-bold text-sm">{pedidosWhatsApp.length} Pedidos Registrados</span>
+                  <span className="text-emerald-700 font-bold text-sm">{pedidosWhatsApp.length} Pedidos Pendientes</span>
                 </div>
               </div>
 
               {pedidosWhatsApp.length === 0 ? (
                 <div className="p-12 text-center text-slate-400">
                   <span className="text-4xl block mb-2">📥</span>
-                  <p className="font-bold text-sm">No hay pedidos de WhatsApp pendientes todavía.</p>
+                  <p className="font-bold text-sm">No hay pedidos de WhatsApp pendientes por aprobar.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -570,11 +631,8 @@ export default function AdminDashboardSeguro() {
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2.5">
                           <span className="font-black text-purple-700 text-base">{pedido.id}</span>
-                          <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                            pedido.estado === 'Vendido' ? 'bg-green-100 text-green-700' : 
-                            pedido.estado === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {pedido.estado}
+                          <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                            Pendiente de Aprobación
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 font-bold">📅 {pedido.fecha} | 👤 {pedido.cliente} | 📍 {pedido.direccion}</p>
@@ -593,16 +651,16 @@ export default function AdminDashboardSeguro() {
 
                       <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
                         <button 
-                          onClick={() => cambiarEstadoPedidoWhatsApp(pedido.id, 'Vendido')}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                          onClick={() => aprobarPedidoWhatsApp(pedido)}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-colors shadow-sm"
                         >
                           ✅ Aprobar Venta
                         </button>
                         <button 
-                          onClick={() => cambiarEstadoPedidoWhatsApp(pedido.id, 'Cancelado')}
-                          className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+                          onClick={() => cancelarPedidoWhatsApp(pedido.id)}
+                          className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2.5 rounded-xl text-xs font-bold transition-colors"
                         >
-                          ❌ Cancelar
+                          ❌ Descartar
                         </button>
                       </div>
                     </div>
